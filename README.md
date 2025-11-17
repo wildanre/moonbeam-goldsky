@@ -1,6 +1,6 @@
 # Lending Pool Subgraph
 
-This subgraph indexes events from the Lending Pool smart contracts on Base Sepolia network. It tracks lending pool creation, liquidity supply/withdrawal, borrowing, repayments, collateral management, and position creation.
+This subgraph indexes events from the Lending Pool smart contracts on moonbeam. It tracks lending pool creation, liquidity supply/withdrawal, borrowing, repayments, collateral management, and position creation.
 
 ## Overview
 
@@ -11,11 +11,6 @@ The subgraph consists of:
 
 ## Smart Contract Details
 
-### Network Configuration
-- **Network**: Base Sepolia
-- **Factory Address**: `0x983CDD4696d5B36219F22dDc85E9BFc448363f0b`
-- **Pool Address**: `0xd6c2FD4E09Ebaa8B81478c42f57381439B692789`
-- **Start Block**: `30389360`
 
 ### Tracked Events
 
@@ -87,7 +82,7 @@ goldsky subgraph deploy my-subgraph/1.0
 │   ├── LendingPool.json
 │   └── LendingPoolFactory.json
 ├── config/                        # Network configurations
-│   └── base.json
+│   └── network.json
 ├── src/                          # Mapping functions
 │   └── lending-mapping.ts
 ├── schema.lending.graphql        # GraphQL schema
@@ -142,7 +137,7 @@ goldsky subgraph deploy my-subgraph/1.0
 ## Development Notes
 
 ### Configuration
-- Network settings are defined in `config/base.json`
+- Network settings are defined in `config`
 - Contract addresses and start block are configurable
 - Schema defines all trackable entities and their relationships
 

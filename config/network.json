@@ -1,5 +1,5 @@
 {
-  "network": "base",
-  "proxyAddress": "0x42C5dFc5899160e9c4e2E139AfFe7472dDf4D86E",
-  "startBlock": 37123873
+  "network": "moonbeam",
+  "proxyAddress": "0xAb9b266f64dA601F7afb9582dE59DF9485d7e48a",
+  "startBlock": 13381579
 }

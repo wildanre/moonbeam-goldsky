@@ -1,6 +1,6 @@
 specVersion: 0.0.4
 description: Lending Pool Subgraph for {{network}}
-repository: https://github.com/wildanre/ibran-goldsky
+repository: https://github.com/wildanre
 schema:
   file: ./schema.lending.graphql
 dataSources:

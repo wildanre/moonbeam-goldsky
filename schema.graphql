@@ -212,7 +212,7 @@ type UserCollateral @entity {
   pool: LendingPool!
   asset: Bytes!
   totalCollateralAmount: BigInt!
-  totalCollateralValue: BigInt! # in USD or base currency
+  totalCollateralValue: BigInt! # 
   collateralFactor: Int! # LTV ratio in basis points
   isActive: Boolean!
   lastUpdated: BigInt!
@@ -226,7 +226,7 @@ type UserBorrow @entity {
   pool: LendingPool!
   asset: Bytes!
   totalBorrowedAmount: BigInt!
-  totalBorrowedValue: BigInt! # in USD or base currency
+  totalBorrowedValue: BigInt! # 
   accruedInterest: BigInt!
   borrowRate: Int! # current borrow rate in basis points
   borrowRateMode: BigInt! # 1 for stable, 2 for variable

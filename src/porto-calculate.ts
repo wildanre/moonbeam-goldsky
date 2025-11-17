@@ -1,51 +1,50 @@
 import { ethereum, BigInt, Address, Bytes } from "@graphprotocol/graph-ts";
 import { Porto, PortoSnapshot, LendingPool } from "../generated/schema";
 
-// ========================================
 // TOKEN ADDRESS CONSTANTS
-// ========================================
 
-// Mock Tokens (Base Sepolia Testnet)
-const BASE_MOCK_USDC = "0xd2e0f459a2518b9459b9b11db5aa014f0bf622a7";
-const BASE_MOCK_USDT = "0xd61f31154bf292c7be2fd81fac9810f6d93ecc2b";
-const BASE_MOCK_WETH = "0x7954270f038bfae7760ccf8d9094745d3e9cf4a3";
+const MOCK_USDC = "0xb2FeaAC5202a3653fDA3f546C7c2b1F3958298E6";
+const MOCK_USDT = "0x3De8C22F6b84C575429c1B9cbf5bdDd49cf129fC";
+const MOCK_WETH = "0x0ca57c18b53DbC15D46B55B73d52ce6AdCb6B060";
+const MOCK_WGLMR = "0x69f49486D06FC3206060B10B433a26cDb8160479";
 
-// Real Tokens (Base Mainnet)
-const BASE_USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
-const BASE_USDT = "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2";
-const BASE_ETH = "0x0000000000000000000000000000000000000001";
-const BASE_WETH = "0x4200000000000000000000000000000000000006";
-const BASE_WBTC = "0x0555e30da8f98308edb960aa94c0db47230d2b9c";
 
-// ========================================
+const USDC = "0xFFfffffF7D2B0B761Af01Ca8e25242976ac0aD7D";
+const USDT = "0xFFFFFFfFea09FB06d082fd1275CD48b191cbCD1d";
+const ETH = "0x0000000000000000000000000000000000000001";
+const WETH = "0xFFffFFfF86829AFE1521ad2296719Df3acE8DEd7";
+const WBTC = "0xfFffFFFf1B4Bb1ac5749F73D866FfC91a3432c47";
+const WGLMR = "0xAcc15dC74880C9944775448304B263D191c6077F";
+
+
 // TOKEN NORMALIZATION & SYMBOL MAPPING
-// ========================================
 
-/**
- * Normalizes token addresses by mapping mock tokens to their real counterparts
- * Mock tokens and real tokens are treated as the same token
- */
 export function normalizeTokenAddress(tokenAddress: Bytes): string {
   let addressLower = tokenAddress.toHexString().toLowerCase();
 
   // Normalize USDC (Mock USDC -> Real USDC)
-  if (addressLower == BASE_MOCK_USDC) {
-    return BASE_USDC;
+  if (addressLower == MOCK_USDC) {
+    return USDC;
   }
 
   // Normalize USDT (Mock USDT -> Real USDT)
-  if (addressLower == BASE_MOCK_USDT) {
-    return BASE_USDT;
+  if (addressLower == MOCK_USDT) {
+    return USDT;
   }
 
   // Normalize WETH (Mock WETH -> Real WETH)
-  if (addressLower == BASE_MOCK_WETH) {
-    return BASE_WETH;
+  if (addressLower == MOCK_WETH) {
+    return WETH;
+  }
+
+  // Normalize WGLMR (Mock WGLMR -> Real WGLMR)
+  if (addressLower == MOCK_WGLMR) {
+    return WGLMR;
   }
 
   // ETH normalization (ETH -> WETH for consistency)
-  if (addressLower == BASE_ETH) {
-    return BASE_WETH;
+  if (addressLower == ETH) {
+    return WETH;
   }
 
   // Return original address for non-mock tokens
@@ -56,28 +55,26 @@ export function normalizeTokenAddress(tokenAddress: Bytes): string {
  * Gets the token symbol based on normalized address
  */
 export function getTokenSymbol(normalizedAddress: string): string {
-  if (normalizedAddress == BASE_USDC) {
+  if (normalizedAddress == USDC) {
     return "USDC";
   }
-  if (normalizedAddress == BASE_USDT) {
+  if (normalizedAddress == USDT) {
     return "USDT";
   }
-  if (normalizedAddress == BASE_WETH) {
+  if (normalizedAddress == WETH) {
     return "WETH";
   }
-  if (normalizedAddress == BASE_WBTC) {
+  if (normalizedAddress == WBTC) {
     return "WBTC";
+  }
+  if (normalizedAddress == WGLMR) {
+    return "WGLMR";
   }
   return "UNKNOWN";
 }
 
-// ========================================
 // PORTO ENTITY MANAGEMENT
-// ========================================
 
-/**
- * Gets or creates a Porto entity for a given token
- */
 export function getOrCreatePorto(
   tokenAddress: Bytes,
   timestamp: BigInt,
@@ -111,13 +108,8 @@ export function getOrCreatePorto(
   return porto as Porto;
 }
 
-// ========================================
 // PORTO CALCULATION FUNCTIONS
-// ========================================
 
-/**
- * Recalculates all Porto metrics for a given token by aggregating across all pools
- */
 export function recalculatePortoForToken(
   tokenAddress: Bytes,
   timestamp: BigInt,
@@ -132,13 +124,6 @@ export function recalculatePortoForToken(
   let totalBorrow = BigInt.fromI32(0);
   let poolCount = BigInt.fromI32(0);
 
-  // Note: Since we can't query all pools directly in AssemblyScript,
-  // we'll need to update this incrementally from events
-  // This is a placeholder for the calculation logic
-  
-  // For now, we'll keep the existing values and update them incrementally
-  // This function will be called from event handlers to update the totals
-
   porto.lastUpdated = timestamp;
   porto.blockNumber = blockNumber;
   porto.save();
@@ -147,36 +132,28 @@ export function recalculatePortoForToken(
   createPortoSnapshot(porto, timestamp, blockNumber);
 }
 
-/**
- * Updates Porto metrics incrementally when pool events occur
- */
 export function updatePortoMetrics(
   pool: LendingPool,
   timestamp: BigInt,
   blockNumber: BigInt
 ): void {
-  // Update Porto for token0 (collateral token)
   updatePortoForToken(
     pool.token0,
     pool,
-    true, // isCollateralToken
+    true,
     timestamp,
     blockNumber
   );
 
-  // Update Porto for token1 (borrow token)
   updatePortoForToken(
     pool.token1,
     pool,
-    false, // isBorrowToken
+    false,
     timestamp,
     blockNumber
   );
 }
 
-/**
- * Updates Porto for a specific token based on pool data
- */
 function updatePortoForToken(
   tokenAddress: Bytes,
   pool: LendingPool,
@@ -186,23 +163,12 @@ function updatePortoForToken(
 ): void {
   let porto = getOrCreatePorto(tokenAddress, timestamp, blockNumber);
 
-  // This is a simplified calculation
-  // In a real scenario, you'd need to track all pools using this token
-  // and aggregate their values
 
   if (isCollateralToken) {
-    // For collateral token (token0):
-    // - Add to totalLiquidityAll from totalSupplyAssets
-    // - Add to totalCollateralAll (needs to be tracked separately in events)
-    
-    // Note: This is incremental update logic
-    // You may need to store pool-specific values and aggregate them
   } else {
-    // For borrow token (token1):
-    // - Add to totalBorrowAll from totalBorrowAssets
+
   }
 
-  // Calculate TVL: totalLiquidity + totalCollateral
   porto.tvl = porto.totalLiquidityAll.plus(porto.totalCollateralAll);
 
   porto.lastUpdated = timestamp;
@@ -213,9 +179,6 @@ function updatePortoForToken(
   createPortoSnapshot(porto, timestamp, blockNumber);
 }
 
-/**
- * Creates a snapshot of Porto metrics for historical tracking
- */
 function createPortoSnapshot(
   porto: Porto,
   timestamp: BigInt,
@@ -243,9 +206,7 @@ function createPortoSnapshot(
   snapshot.save();
 }
 
-// ========================================
 // HELPER FUNCTIONS FOR EVENT HANDLERS
-// ========================================
 
 /**
  * Updates Porto when liquidity is supplied to a pool
@@ -398,8 +359,6 @@ export function handlePortoRepay(
   // Update borrow balance (decrease)
   porto.totalBorrowNow = porto.totalBorrowNow.minus(amount);
   
-  // IMPORTANT: When repay occurs, available liquidity increases back
-  // totalLiquidityNow represents available liquidity, so it must increase
   porto.totalLiquidityNow = porto.totalLiquidityNow.plus(amount);
   
   // Recalculate TVL
@@ -414,9 +373,7 @@ export function handlePortoRepay(
   createPortoSnapshot(porto, timestamp, blockNumber);
 }
 
-/**
- * Increments the pool count for a token when a new pool is created
- */
+
 export function handlePortoPoolCreated(
   token0: Bytes,
   token1: Bytes,
