@@ -1,0 +1,329 @@
+type LendingPool @entity {
+  id: ID!
+  address: Bytes!
+  factory: LendingPoolFactory!
+  token0: Bytes!
+  token1: Bytes!
+  totalDeposits: BigInt!
+  totalWithdrawals: BigInt!
+  totalBorrows: BigInt!
+  totalRepays: BigInt!
+  totalSwaps: BigInt!
+  totalDepositNow: BigInt!
+  totalWithdrawalNow: BigInt!
+  totalBorrowNow: BigInt!
+  totalRepayNow: BigInt!
+  totalSwapNow: BigInt!
+  # APY tracking fields
+  totalSupplyAssets: BigInt!
+  totalSupplyShares: BigInt!
+  totalLiquidity: BigInt! # Available liquidity (totalSupplyAssets - totalBorrowAssets)
+  totalBorrowAssets: BigInt!
+  totalBorrowShares: BigInt!
+  utilizationRate: Int! # in basis points (0-10000)
+  supplyAPY: Int! # in basis points (1% = 100)
+  borrowAPY: Int! # in basis points (1% = 100)
+  supplyRate: Int! # in basis points per year
+  borrowRate: Int! # in basis points per year
+  lastAccrued: BigInt!
+  created: BigInt!
+}
+
+type User @entity {
+  id: ID!
+  address: Bytes!
+  totalDeposited: BigInt!
+  totalWithdrawn: BigInt!
+  totalBorrowed: BigInt!
+  totalRepaid: BigInt!
+  totalSwapped: BigInt!
+  totalDepositNow: BigInt!
+  totalWithdrawalNow: BigInt!
+  totalBorrowNow: BigInt!
+  totalRepayNow: BigInt!
+  totalSwapNow: BigInt!
+}
+
+type LendingPoolFactory @entity {
+  id: ID!
+  address: Bytes!
+  poolsCreated: [LendingPool!]! @derivedFrom(field: "factory")
+  totalPoolsCreated: BigInt!
+  created: BigInt!
+}
+
+type LendingPoolCreated @entity {
+  id: ID!
+  lendingPool: Bytes!
+  collateralToken: Bytes!
+  borrowToken: Bytes!
+  ltv: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type SupplyLiquidity @entity {
+  id: ID!
+  user: User!
+  pool: LendingPool!
+  asset: Bytes!
+  amount: BigInt!
+  shares: BigInt! # Added shares field to match ABI
+  onBehalfOf: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type WithdrawLiquidity @entity {
+  id: ID!
+  user: User!
+  pool: LendingPool!
+  asset: Bytes!
+  amount: BigInt!
+  shares: BigInt! # Added shares field to match ABI
+  to: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type BorrowDebtCrosschain @entity {
+  id: ID!
+  user: User!
+  pool: LendingPool!
+  asset: Bytes!
+  amount: BigInt!
+  shares: BigInt! # Added shares field to match ABI
+  chainId: BigInt! # Renamed from borrowRateMode for clarity
+  addExecutorLzReceiveOption: BigInt! # Renamed from borrowRate for clarity
+  onBehalfOf: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type RepayWithCollateralByPosition @entity {
+  id: ID!
+  user: User!
+  pool: LendingPool!
+  asset: Bytes!
+  amount: BigInt!
+  shares: BigInt! # Added shares field to match ABI
+  repayer: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type SupplyCollateral @entity {
+  id: ID!
+  user: User!
+  pool: LendingPool!
+  asset: Bytes!
+  amount: BigInt!
+  onBehalfOf: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+
+type CreatePosition @entity {
+  id: ID!
+  user: User!
+  pool: LendingPool!
+  positionAddress: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+
+# User Position tracking - maps users to their position addresses in each pool
+type UserPosition @entity {
+  id: ID! # user-pool
+  user: User!
+  pool: LendingPool!
+  positionAddress: Bytes!
+  isActive: Boolean!
+  createdAt: BigInt!
+  lastUpdated: BigInt!
+}
+
+# Position Events - Events dari Position contract
+type PositionWithdrawCollateral @entity {
+  id: ID!
+  user: User!
+  positionAddress: Bytes!
+  pool: LendingPool! # Pool address yang terkait dengan position
+  amount: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type PositionSwapTokenByPosition @entity {
+  id: ID!
+  user: User!
+  positionAddress: Bytes!
+  pool: LendingPool! # Pool address yang terkait dengan position
+  tokenIn: Bytes!
+  tokenOut: Bytes!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+# APY and Interest Rate tracking
+type PoolAPYSnapshot @entity {
+  id: ID! # poolAddress-timestamp
+  pool: LendingPool!
+  supplyAPY: Int! # in basis points (1% = 100)
+  borrowAPY: Int! # in basis points (1% = 100)
+  utilizationRate: Int! # in basis points (100% = 10000)
+  totalSupplyAssets: BigInt!
+  totalBorrowAssets: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+# Interest accrual events
+type InterestAccrual @entity {
+  id: ID!
+  pool: LendingPool!
+  previousSupplyAssets: BigInt!
+  newSupplyAssets: BigInt!
+  previousBorrowAssets: BigInt!
+  newBorrowAssets: BigInt!
+  interestEarned: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+# User Collateral Position in a Pool
+type UserCollateral @entity {
+  id: ID! # user-pool-asset
+  user: User!
+  pool: LendingPool!
+  asset: Bytes!
+  totalCollateralAmount: BigInt!
+  totalCollateralValue: BigInt! # in USD or base currency
+  collateralFactor: Int! # LTV ratio in basis points
+  isActive: Boolean!
+  lastUpdated: BigInt!
+  createdAt: BigInt!
+}
+
+# User Borrow Position in a Pool
+type UserBorrow @entity {
+  id: ID! # user-pool-asset
+  user: User!
+  pool: LendingPool!
+  asset: Bytes!
+  totalBorrowedAmount: BigInt!
+  totalBorrowedValue: BigInt! # in USD or base currency
+  accruedInterest: BigInt!
+  borrowRate: Int! # current borrow rate in basis points
+  borrowRateMode: BigInt! # 1 for stable, 2 for variable
+  healthFactor: BigInt! # health factor (scaled by 1e18)
+  isActive: Boolean!
+  lastAccrued: BigInt!
+  lastUpdated: BigInt!
+  createdAt: BigInt!
+}
+
+# ========================================
+# ROUTER EVENT TABLES
+# ========================================
+
+# Pool to Router Mapping untuk dynamic discovery
+type PoolRouter @entity {
+  id: ID! # poolAddress
+  poolAddress: Bytes!
+  routerAddress: Bytes!
+  isActive: Boolean!
+  discoveredAt: BigInt!
+  blockNumber: BigInt!
+}
+
+# Emergency Position Reset Event
+type EmergencyPositionReset @entity {
+  id: ID!
+  user: User!
+  router: Bytes!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+# Position Liquidated Event
+type PositionLiquidated @entity {
+  id: ID!
+  user: User!
+  router: Bytes!
+  sharesRemoved: BigInt!
+  debtRepaid: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+# ========================================
+# PORTO - Portfolio Analytics per Token
+# ========================================
+
+# Porto entity tracks aggregated metrics per token
+type Porto @entity {
+  id: ID! # token address (normalized - mock and real tokens combined)
+  tokenAddress: Bytes! # The normalized token address
+  tokenSymbol: String # Token symbol (e.g., USDC, USDT, WETH, WBTC, ETH)
+  
+  # Current balances (can increase and decrease)
+  tvl: BigInt! # Total Value Locked (totalLiquidityNow + totalCollateralNow)
+  totalCollateralNow: BigInt! # Current collateral balance across all pools
+  totalLiquidityNow: BigInt! # Current liquidity balance across all pools
+  totalBorrowNow: BigInt! # Current borrowed balance across all pools
+  
+  # Cumulative totals (only increase)
+  totalCollateralAll: BigInt! # Total collateral ever supplied (cumulative)
+  totalLiquidityAll: BigInt! # Total liquidity ever supplied (cumulative)
+  totalBorrowAll: BigInt! # Total ever borrowed (cumulative)
+  
+  # Additional tracking
+  poolCount: BigInt! # Number of pools using this token
+  lastUpdated: BigInt! # Last update timestamp
+  blockNumber: BigInt! # Last update block number
+}
+
+# Porto snapshot for historical tracking
+type PortoSnapshot @entity {
+  id: ID! # token-timestamp
+  porto: Porto!
+  tvl: BigInt!
+  totalCollateralNow: BigInt!
+  totalLiquidityNow: BigInt!
+  totalBorrowNow: BigInt!
+  totalCollateralAll: BigInt!
+  totalLiquidityAll: BigInt!
+  totalBorrowAll: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+# Position to Pool mapping for tracking which pool a position belongs to
+type PositionPoolMapping @entity {
+  id: ID! # position address
+  positionAddress: Bytes!
+  poolAddress: Bytes!
+  pool: LendingPool!
+  collateralToken: Bytes!
+  borrowToken: Bytes!
+  isActive: Boolean!
+  createdAt: BigInt!
+  lastUpdated: BigInt!
+}

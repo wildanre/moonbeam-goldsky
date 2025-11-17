@@ -1,0 +1,63 @@
+specVersion: 0.0.4
+description: Lending Pool Subgraph for {{network}}
+repository: https://github.com/wildanre/ibran-goldsky
+schema:
+  file: ./schema.lending.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: LendingPoolFactory
+    network: {{network}}
+    source:
+      address: "{{factoryAddress}}"
+      abi: LendingPoolFactory
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - LendingPool
+        - LendingPoolCreated
+      abis:
+        - name: LendingPoolFactory
+          file: ./abis/LendingPoolFactory.json
+        - name: LendingPool
+          file: ./abis/LendingPool.json
+      eventHandlers:
+        - event: LendingPoolCreated(indexed address,indexed address,indexed address,uint256)
+          handler: handlePoolCreated
+      file: ./src/lending-mapping.ts
+templates:
+  - kind: ethereum/contract
+    name: LendingPool
+    network: {{network}}
+    source:
+      abi: LendingPool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - SupplyLiquidity
+        - WithdrawLiquidity
+        - BorrowDebtCrosschain
+        - RepayWithCollateralByPosition
+        - SupplyCollateral
+        - CreatePosition
+      abis:
+          - name: LendingPool
+            file: ./abis/LendingPool.json
+      eventHandlers:
+        - event: SupplyLiquidity(address,uint256,uint256)
+          handler: handleSupplyLiquidity
+        - event: WithdrawLiquidity(address,uint256,uint256)
+          handler: handleWithdrawLiquidity
+        - event: BorrowDebtCrosschain(address,uint256,uint256,uint256,uint256)
+          handler: handleBorrowDebtCrosschain
+        - event: RepayWithCollateralByPosition(address,uint256,uint256)
+          handler: handleRepayWithCollateralByPosition
+        - event: SupplyCollateral(address,uint256)
+          handler: handleSupplyCollateral
+        - event: CreatePosition(address,address)
+          handler: handleCreatePosition
+      file: ./src/lending-mapping.ts
